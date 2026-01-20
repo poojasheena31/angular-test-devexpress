@@ -1,0 +1,49 @@
+{
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development"
+  },
+  "dependencies": {
+    "@angular/common": "~21.0.0",
+    "@angular/compiler": "~21.0.0",
+    "@angular/core": "~21.0.0",
+    "@angular/forms": "~21.0.0",
+    "@angular/platform-browser": "~21.0.0",
+    "@angular/platform-browser-dynamic": "~21.0.0",
+    "@angular/router": "~21.0.0",
+    "@preact/signals-core": "1.8.0",
+    "core-js": "2.6.12",
+    "devexpress-diagram": "2.2.24",
+    "devexpress-gantt": "4.1.64",
+    "devextreme": "24.2.12",
+    "devextreme-angular": "24.2.12",
+    "devextreme-quill": "1.7.7",
+    "es6-object-assign": "latest",
+    "inferno": "8.2.3",
+    "inferno-clone-vnode": "latest",
+    "inferno-compat": "latest",
+    "inferno-create-class": "latest",
+    "inferno-create-element": "8.2.3",
+    "inferno-dom": "latest",
+    "inferno-extras": "latest",
+    "inferno-hydrate": "latest",
+    "jszip": "3.10.1",
+    "luxon": "3.4.4",
+    "prettier": "2.8.8",
+    "rrule": "2.6.4",
+    "rxjs": "^7.8.2",
+    "tslib": "latest",
+    "typescript": "5.9.3",
+    "zone.js": "~0.15.0"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "^21.1.0",
+    "@angular/cli": "~21.0.0",
+    "@angular/compiler-cli": "~21.0.0"
+  },
+  "description": "The DevExtreme Data Grid includes a column header filter option – with it, users can quickly filter rows against values selected in a pop-up menu. To display the built-in filter menu, users can click the Grid’s header filter icon (displayed within the column header).\nDisplay Header Filter Icons\nAssign true to the headerFilter.visible property to display header filter icons for all columns. To hide the icon for a specific column, set the column's allowHeaderFiltering property to false.\nEnable Search UI Within Header Filters\nThe DevExtreme Grid includes a text-based search option. This feature allows users to search for specific values within a header filter. To configure the search panel, define the search property in the global headerFilter object or in a columns.headerFilter object.\nThe search panel's default behavior looks for values only within the same data field. You can include additional fields in the search. Specify the search.searchExpr property for this purpose. For example, this demo allows you to enter a state name in the City column's header filter. You can then see a list of all cities within the specified state and select city names that you want to use as a filter.\nTo apply a comparison operation used to search header filter values, specify the search.mode property.\n",
+  "main": "src/app/app.component.ts",
+  "name": "column-header-filter"
+}

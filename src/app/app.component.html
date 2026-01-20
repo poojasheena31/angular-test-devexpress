@@ -1,0 +1,58 @@
+<dx-data-grid
+  #exposureGrid
+  id="employees"
+  [dataSource]="dataSource"
+  keyExpr="ID"
+  [showRowLines]="true"
+  [showBorders]="true"
+  [columnAutoWidth]="true"
+  [remoteOperations]="{ filtering: true, paging: true, sorting: true }"
+  (onCellClick)="onCellClick($event)"
+  (onSelectionChanged)="onSelectionChanged($event)"
+>
+  <dxo-data-grid-header-filter [visible]="true"></dxo-data-grid-header-filter>
+  <dxo-data-grid-selection
+    mode="multiple"
+    selectAllMode="allPages"
+    [deferred]="true"
+    [allowSelectAll]="true"
+    showCheckBoxesMode="always"
+  ></dxo-data-grid-selection>
+  <dxo-data-grid-paging [enabled]="true" [pageSize]="10"></dxo-data-grid-paging>
+  <dxo-data-grid-scrolling
+    mode="infinite"
+    [preloadEnabled]="true"
+    [useNative]="false"
+    columnRenderingMode="virtual"
+  ></dxo-data-grid-scrolling>
+  <dxi-data-grid-column 
+    dataField="FirstName"
+    caption="First Name" 
+    [calculateCellValue]="getFirstName"
+    [calculateFilterExpression]="calculateFirstNameFilter"
+    [allowSorting]="false">
+    <dxo-data-grid-header-filter 
+      [allowSelectAll]="false"
+      [dataSource]="firstNameFilterDataSource">
+    </dxo-data-grid-header-filter>
+  </dxi-data-grid-column>
+  <dxi-data-grid-column dataField="LastName">
+    <dxo-data-grid-header-filter>
+      <dxo-data-grid-search [enabled]="true"></dxo-data-grid-search>
+    </dxo-data-grid-header-filter>
+  </dxi-data-grid-column>
+  <dxi-data-grid-column dataField="Position">
+    <dxo-data-grid-header-filter [allowSelectAll]="false">
+      <dxo-data-grid-search [enabled]="true"></dxo-data-grid-search>
+    </dxo-data-grid-header-filter>
+  </dxi-data-grid-column>
+  <dxi-data-grid-column dataField="City">
+    <dxo-data-grid-header-filter>
+      <dxo-data-grid-search
+        [enabled]="true"
+        [searchExpr]="searchExpr"
+        [editorOptions]="editorOptions"
+      ></dxo-data-grid-search>
+    </dxo-data-grid-header-filter>
+  </dxi-data-grid-column>
+</dx-data-grid>
