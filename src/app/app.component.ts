@@ -3,7 +3,7 @@ import { Component, enableProdMode, provideZoneChangeDetection, ViewChild } from
 import { provideHttpClient } from '@angular/common/http';
 import { DxDataGridModule, DxDataGridComponent } from 'devextreme-angular';
 import { SelectionChangedEvent, CellClickEvent } from 'devextreme/ui/data_grid';
-import { Employee, Service, FirstNameEnum, Provider } from './app.service';
+import { Employee, Service, FirstNameEnum, EmployeeAlias } from './app.service';
 import CustomStore from 'devextreme/data/custom_store';
 
 
@@ -52,7 +52,7 @@ export class AppComponent {
 
   getFirstName = (rowData: Employee) => {
     if (rowData.FirstName && rowData.FirstName.length > 0) {
-      return rowData.FirstName.map(p => p.provider).join(', ');
+      return rowData.FirstName.map(p => p.fsname).join(', ');
     }
     return '';
   };
@@ -140,10 +140,10 @@ export class AppComponent {
         const [field, operation, value] = filter;
         
         if (field === 'FirstName') {
-          // Filter by provider array
+          // Filter by fsname array
           return data.filter(emp => {
             if (!emp.FirstName || emp.FirstName.length === 0) return false;
-            return emp.FirstName.some(p => p.provider === value);
+            return emp.FirstName.some(p => p.fsname === value);
           });
         }
         

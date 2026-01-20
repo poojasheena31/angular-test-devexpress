@@ -11,16 +11,16 @@ export enum FirstNameEnum {
   Michael = 'Michael'
 }
 
-export interface Provider {
-  provider: string;
-  dateAdded: string | null;
-  dateFirstSeen: string;
+export interface EmployeeAlias {
+  fsname: string;
+  name: string;
+  nickname: string;
 }
 
 export class Employee {
   ID?: number;
 
-  FirstName?: Provider[];
+  FirstName?: EmployeeAlias[];
 
   LastName?: string;
 
@@ -60,74 +60,73 @@ export class Service {
         const enumValues = Object.values(FirstNameEnum);
         
         return employees.map((emp: any, index: number) => {
-          // Map OData first names to enum values with provider structure
-          let firstName: Provider[] = [];
+          // Map OData first names to alias structure
+          let firstName: EmployeeAlias[] = [];
           const odataFirstName = emp.FirstName;
-          const baseDate = new Date('2025-11-03T13:14:23.121Z');
           
-          // Helper function to create provider objects
-          const createProvider = (providerName: string, dayOffset: number): Provider => ({
-            provider: providerName,
-            dateAdded: null,
-            dateFirstSeen: new Date(baseDate.getTime() + dayOffset * 24 * 60 * 60 * 1000).toISOString()
+          // Helper function to create alias objects
+          const createAlias = (fsname: string, name: string): EmployeeAlias => ({
+            fsname: fsname,
+            name: name,
+            nickname: name.substring(0, 4).toLowerCase()
           });
           
-          // Map actual names to provider enum values
+          // Map actual names to alias values
           if (odataFirstName === 'Nancy') {
             firstName = [
-              createProvider(FirstNameEnum.Nan, 0),
-              createProvider(FirstNameEnum.Janet, 70)
+              createAlias(FirstNameEnum.Nan, 'Nancy'),
+              createAlias(FirstNameEnum.Janet, 'Janet')
             ];
           } else if (odataFirstName === 'Andrew') {
             firstName = [
-              createProvider(FirstNameEnum.Janet, 10),
-              createProvider(FirstNameEnum.Margaret, 20),
-              createProvider(FirstNameEnum.Steven, 30)
+              createAlias(FirstNameEnum.Janet, 'Janet'),
+              createAlias(FirstNameEnum.Margaret, 'Margaret'),
+              createAlias(FirstNameEnum.Steven, 'Steven')
             ];
           } else if (odataFirstName === 'Janet') {
             firstName = [
-              createProvider(FirstNameEnum.Margaret, 5),
-              createProvider(FirstNameEnum.Michael, 15)
+              createAlias(FirstNameEnum.Margaret, 'Margaret'),
+              createAlias(FirstNameEnum.Michael, 'Michael')
             ];
           } else if (odataFirstName === 'Margaret') {
             firstName = [
-              createProvider(FirstNameEnum.Steven, 25),
-              createProvider(FirstNameEnum.Michael, 35),
-              createProvider(FirstNameEnum.Nan, 45)
+              createAlias(FirstNameEnum.Steven, 'Steven'),
+              createAlias(FirstNameEnum.Michael, 'Michael'),
+              createAlias(FirstNameEnum.Nan, 'Nancy')
             ];
           } else if (odataFirstName === 'Steven') {
             firstName = [
-              createProvider(FirstNameEnum.Michael, 40),
-              createProvider(FirstNameEnum.Nan, 50)
+              createAlias(FirstNameEnum.Michael, 'Michael'),
+              createAlias(FirstNameEnum.Nan, 'Nancy')
             ];
           } else if (odataFirstName === 'Michael') {
             firstName = [
-              createProvider(FirstNameEnum.Nan, 12),
-              createProvider(FirstNameEnum.Janet, 22),
-              createProvider(FirstNameEnum.Margaret, 32)
+              createAlias(FirstNameEnum.Nan, 'Nancy'),
+              createAlias(FirstNameEnum.Janet, 'Janet'),
+              createAlias(FirstNameEnum.Margaret, 'Margaret')
             ];
           } else if (odataFirstName === 'Robert') {
             firstName = [
-              createProvider(FirstNameEnum.Steven, 8),
-              createProvider(FirstNameEnum.Janet, 18)
+              createAlias(FirstNameEnum.Steven, 'Steven'),
+              createAlias(FirstNameEnum.Janet, 'Janet')
             ];
           } else if (odataFirstName === 'Laura') {
             firstName = [
-              createProvider(FirstNameEnum.Margaret, 28),
-              createProvider(FirstNameEnum.Steven, 38)
+              createAlias(FirstNameEnum.Margaret, 'Margaret'),
+              createAlias(FirstNameEnum.Steven, 'Steven')
             ];
           } else if (odataFirstName === 'Anne') {
             firstName = [
-              createProvider(FirstNameEnum.Michael, 48),
-              createProvider(FirstNameEnum.Nan, 58),
-              createProvider(FirstNameEnum.Janet, 68)
+              createAlias(FirstNameEnum.Michael, 'Michael'),
+              createAlias(FirstNameEnum.Nan, 'Nancy'),
+              createAlias(FirstNameEnum.Janet, 'Janet')
             ];
           } else {
             // Default mapping for any other names
             const nameCount = 2 + (index % 2);
             for (let i = 0; i < nameCount; i++) {
               const randomIndex = (index + i) % enumValues.length;
-              firstName.push(createProvider(enumValues[randomIndex], i * 10));
+              firstName.push(createAlias(enumValues[randomIndex], enumValues[randomIndex]));
             }
           }
           
