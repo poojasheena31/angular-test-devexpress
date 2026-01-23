@@ -2,11 +2,11 @@
   #exposureGrid
   id="employees"
   [dataSource]="dataSource"
-  keyExpr="ID"
+  keyExpr="EmployeeID"
   [showRowLines]="true"
   [showBorders]="true"
   [columnAutoWidth]="true"
-  [remoteOperations]="{ filtering: true, paging: true, sorting: true }"
+  [remoteOperations]="remoteOperations"
   (onCellClick)="onCellClick($event)"
   (onSelectionChanged)="onSelectionChanged($event)"
 >
@@ -41,7 +41,7 @@
       <dxo-data-grid-search [enabled]="true"></dxo-data-grid-search>
     </dxo-data-grid-header-filter>
   </dxi-data-grid-column>
-  <dxi-data-grid-column dataField="Position">
+  <dxi-data-grid-column dataField="Title" caption="Position">
     <dxo-data-grid-header-filter [allowSelectAll]="false">
       <dxo-data-grid-search [enabled]="true"></dxo-data-grid-search>
     </dxo-data-grid-header-filter>

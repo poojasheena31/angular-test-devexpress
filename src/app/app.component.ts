@@ -4,7 +4,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { DxDataGridModule, DxDataGridComponent } from 'devextreme-angular';
 import { SelectionChangedEvent, CellClickEvent } from 'devextreme/ui/data_grid';
 import { Employee, Service, FirstNameEnum, EmployeeAlias } from './app.service';
-import CustomStore from 'devextreme/data/custom_store';
+import ODataStore from 'devextreme/data/odata/store';
+import DataSource from 'devextreme/data/data_source';
 
 
 let modulePrefix = '';
@@ -37,128 +38,162 @@ export class AppComponent {
 
   searchExpr = ['City'];
 
+  remoteOperations = {
+    filtering: true,
+    paging: true,
+    sorting: true
+  };
+
   firstNameFilterDataSource = [
-    { text: 'Nan', value: 'Nan' },
     { text: 'Janet', value: 'Janet' },
+    { text: 'Suzane', value: 'Suzane' },
     { text: 'Margaret', value: 'Margaret' },
     { text: 'Steven', value: 'Steven' },
-    { text: 'Michael', value: 'Michael' }
+    { text: 'Michael', value: 'Michael' },
+    { text: 'Nan', value: 'Nan' }
   ];
 
   calculateFirstNameFilter = (filterValue: any, selectedFilterOperation: string | null, target: string) => {
-    // Return a filter expression array that will be sent to the server/CustomStore
-    return ['FirstName', '=', filterValue];
+    // Map fsname values back to OData FirstName for server-side filtering
+    const fsnameToODataMap: { [key: string]: string[] } = {
+      'Janet': ['Nancy', 'Andrew', 'Janet', 'Michael', 'Robert', 'Anne'],
+      'Suzane': ['Nancy'],
+      'Margaret': ['Andrew', 'Janet', 'Margaret', 'Michael', 'Laura'],
+      'Steven': ['Andrew', 'Margaret', 'Steven', 'Robert', 'Laura'],
+      'Michael': ['Janet', 'Steven', 'Michael', 'Anne'],
+      'Nan': ['Margaret', 'Steven', 'Michael', 'Anne']
+    };
+    
+    const odataValues = fsnameToODataMap[filterValue] || [];
+    
+    if (odataValues.length === 0) {
+      return ['FirstName', '=', filterValue];
+    } else if (odataValues.length === 1) {
+      return ['FirstName', '=', odataValues[0]];
+    } else {
+      // Build OR expression for OData
+      const filters = odataValues.map(value => ['FirstName', '=', value]);
+      return filters.reduce((acc: any, filter, index) => {
+        if (index === 0) return filter;
+        return [acc, 'or', filter];
+      });
+    }
   };
 
-  getFirstName = (rowData: Employee) => {
-    if (rowData.FirstName && rowData.FirstName.length > 0) {
-      return rowData.FirstName.map(p => p.fsname).join(', ');
+  getFirstName = (rowData: any) => {
+    // Display transformed FirstName array as comma-separated fsname values
+    if (rowData.FirstName && Array.isArray(rowData.FirstName) && rowData.FirstName.length > 0) {
+      return rowData.FirstName.map((p: EmployeeAlias) => p.fsname).join(', ');
     }
     return '';
   };
 
   constructor(service: Service) {
-    console.log('Component initialized, fetching employees...');
+    console.log('Component initialized, setting up OData store...');
     
-    // Create a custom store to simulate remote operations
-    this.dataSource = new CustomStore({
-      key: 'ID',
-      load: (loadOptions: any) => {
-        console.log('Load options:', loadOptions);
+    // Create OData store for remote operations
+    const odataStore = new ODataStore({
+      url: 'https://services.odata.org/V4/Northwind/Northwind.svc/Employees',
+      key: 'EmployeeID',
+      keyType: 'Int32',
+      version: 4,
+      deserializeDates: false,
+      beforeSend: (e) => {
+        console.log('OData request params:', e.params);
         
-        return service.getEmployees().toPromise().then((data: Employee[] | undefined) => {
-          if (!data) return { data: [], totalCount: 0 };
-          this.employees = data;
-          let filteredData = [...data];
+        // Add ascending sort order if not specified
+        if (e.params['$orderby'] && !e.params['$orderby'].endsWith(' desc')) {
+          e.params['$orderby'] += ' asc';
+        }
+        
+        // Transform FirstName filters to work with OData
+        if (e.params['$filter'] && e.params['$filter'].includes('FirstName')) {
+          // OData Northwind has FirstName as a simple string field
+          // Keep the filter as-is since we'll display transformed data on client side
+          console.log('Filter applied:', e.params['$filter']);
+        }
+      },
+      errorHandler: (e) => {
+        console.error('OData error:', e);
+      }
+    });
+
+    // Wrap with DataSource to transform the response
+    this.dataSource = new DataSource({
+      store: odataStore,
+      postProcess: (data: any[]) => {
+        // Transform each item
+        return data.map((item: any) => {
+          const firstName = item.FirstName;
+          let firstNameArray: EmployeeAlias[] = [];
           
-          // Apply filtering if exists
-          if (loadOptions.filter) {
-            const filter = loadOptions.filter;
-            filteredData = this.applyFilter(filteredData, filter);
+          const createAlias = (fsname: string, name: string): EmployeeAlias => ({
+            fsname: fsname,
+            name: name,
+            nickname: name.substring(0, 4).toLowerCase()
+          });
+          
+          if (firstName === 'Nancy') {
+            firstNameArray = [
+              createAlias('Janet', 'Janet'),
+              createAlias('Suzane', 'Suzane')
+            ];
+          } else if (firstName === 'Andrew') {
+            firstNameArray = [
+              createAlias('Janet', 'Janet'),
+              createAlias('Margaret', 'Margaret'),
+              createAlias('Steven', 'Steven')
+            ];
+          } else if (firstName === 'Janet') {
+            firstNameArray = [
+              createAlias('Margaret', 'Margaret'),
+              createAlias('Michael', 'Michael')
+            ];
+          } else if (firstName === 'Margaret') {
+            firstNameArray = [
+              createAlias('Steven', 'Steven'),
+              createAlias('Michael', 'Michael'),
+              createAlias('Nan', 'Nancy')
+            ];
+          } else if (firstName === 'Steven') {
+            firstNameArray = [
+              createAlias('Michael', 'Michael'),
+              createAlias('Nan', 'Nancy')
+            ];
+          } else if (firstName === 'Michael') {
+            firstNameArray = [
+              createAlias('Nan', 'Nancy'),
+              createAlias('Janet', 'Janet'),
+              createAlias('Margaret', 'Margaret')
+            ];
+          } else if (firstName === 'Robert') {
+            firstNameArray = [
+              createAlias('Steven', 'Steven'),
+              createAlias('Janet', 'Janet')
+            ];
+          } else if (firstName === 'Laura') {
+            firstNameArray = [
+              createAlias('Margaret', 'Margaret'),
+              createAlias('Steven', 'Steven')
+            ];
+          } else if (firstName === 'Anne') {
+            firstNameArray = [
+              createAlias('Michael', 'Michael'),
+              createAlias('Nan', 'Nancy'),
+              createAlias('Janet', 'Janet')
+            ];
+          } else {
+            firstNameArray = [createAlias(firstName, firstName)];
           }
           
-          // Apply paging
-          const skip = loadOptions.skip || 0;
-          const take = loadOptions.take || 10;
-          const pagedData = filteredData.slice(skip, skip + take);
-          
-          // Track total count for selection
-          this.totalCount = filteredData.length;
-          console.log('Total count:', this.totalCount);
-          
           return {
-            data: pagedData,
-            totalCount: filteredData.length
+            ...item,
+            FirstName: firstNameArray,
+            _originalFirstName: firstName // Keep original for debugging
           };
         });
       }
     });
-  }
-
-  private applyFilter(data: Employee[], filter: any): Employee[] {
-    if (!filter) return data;
-    
-    console.log('Applying filter:', filter);
-    
-    // Handle complex filter arrays with OR conditions
-    if (Array.isArray(filter)) {
-      // If first element is array, it's a compound filter
-      if (Array.isArray(filter[0])) {
-        let result = data;
-        
-        for (let i = 0; i < filter.length; i++) {
-          const element = filter[i];
-          
-          if (element === 'or') {
-            // For OR, combine results from previous and next filter
-            const prevFilter = filter[i - 1];
-            const nextFilter = filter[i + 1];
-            const prevResult = this.applyFilter(data, prevFilter);
-            const nextResult = this.applyFilter(data, nextFilter);
-            // Combine and deduplicate
-            const combined = [...prevResult, ...nextResult];
-            result = combined.filter((item, index) => 
-              combined.findIndex(t => t.ID === item.ID) === index
-            );
-            i++; // Skip next element as we already processed it
-          } else if (element === 'and') {
-            // For AND, apply filters sequentially
-            const nextFilter = filter[i + 1];
-            result = this.applyFilter(result, nextFilter);
-            i++; // Skip next element
-          } else if (Array.isArray(element)) {
-            // Apply individual filter
-            result = this.applyFilter(result, element);
-          }
-        }
-        
-        return result;
-      }
-      
-      // Handle simple filter [field, operation, value]
-      if (filter.length === 3) {
-        const [field, operation, value] = filter;
-        
-        if (field === 'FirstName') {
-          // Filter by fsname array
-          return data.filter(emp => {
-            if (!emp.FirstName || emp.FirstName.length === 0) return false;
-            return emp.FirstName.some(p => p.fsname === value);
-          });
-        }
-        
-        // Handle other fields
-        return data.filter(emp => {
-          const fieldValue = (emp as any)[field];
-          if (operation === '=' || operation === 'contains') {
-            return fieldValue === value || (typeof fieldValue === 'string' && fieldValue.includes(value));
-          }
-          return true;
-        });
-      }
-    }
-    
-    return data;
   }
 
   onSelectionChanged(event: SelectionChangedEvent) {
