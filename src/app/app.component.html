@@ -1,8 +1,8 @@
 <dx-data-grid
   #exposureGrid
-  id="employees"
+  id="people"
   [dataSource]="dataSource"
-  keyExpr="EmployeeID"
+  keyExpr="UserName"
   [showRowLines]="true"
   [showBorders]="true"
   [columnAutoWidth]="true"
@@ -25,34 +25,24 @@
     [useNative]="false"
     columnRenderingMode="virtual"
   ></dxo-data-grid-scrolling>
+  
   <dxi-data-grid-column 
     dataField="FirstName"
-    caption="First Name" 
-    [calculateCellValue]="getFirstName"
-    [calculateFilterExpression]="calculateFirstNameFilter"
+    caption="First Name">
+    <dxo-data-grid-header-filter>
+      <dxo-data-grid-search [enabled]="true"></dxo-data-grid-search>
+    </dxo-data-grid-header-filter>
+  </dxi-data-grid-column>
+  
+  <dxi-data-grid-column 
+    dataField="AddressInfo"
+    caption="Cities" 
+    [customizeText]="customizeCityText"
+    [calculateFilterExpression]="calculateCityFilter"
     [allowSorting]="false">
     <dxo-data-grid-header-filter 
       [allowSelectAll]="false"
-      [dataSource]="firstNameFilterDataSource">
-    </dxo-data-grid-header-filter>
-  </dxi-data-grid-column>
-  <dxi-data-grid-column dataField="LastName">
-    <dxo-data-grid-header-filter>
-      <dxo-data-grid-search [enabled]="true"></dxo-data-grid-search>
-    </dxo-data-grid-header-filter>
-  </dxi-data-grid-column>
-  <dxi-data-grid-column dataField="Title" caption="Position">
-    <dxo-data-grid-header-filter [allowSelectAll]="false">
-      <dxo-data-grid-search [enabled]="true"></dxo-data-grid-search>
-    </dxo-data-grid-header-filter>
-  </dxi-data-grid-column>
-  <dxi-data-grid-column dataField="City">
-    <dxo-data-grid-header-filter>
-      <dxo-data-grid-search
-        [enabled]="true"
-        [searchExpr]="searchExpr"
-        [editorOptions]="editorOptions"
-      ></dxo-data-grid-search>
+      [dataSource]="cityFilterDataSource">
     </dxo-data-grid-header-filter>
   </dxi-data-grid-column>
 </dx-data-grid>

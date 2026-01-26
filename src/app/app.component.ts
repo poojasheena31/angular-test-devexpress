@@ -1,18 +1,10 @@
 import { bootstrapApplication } from '@angular/platform-browser';
-import { Component, enableProdMode, provideZoneChangeDetection, ViewChild } from '@angular/core';
-import { provideHttpClient } from '@angular/common/http';
+import { Component, provideZoneChangeDetection, ViewChild } from '@angular/core';
 import { DxDataGridModule, DxDataGridComponent } from 'devextreme-angular';
 import { SelectionChangedEvent, CellClickEvent } from 'devextreme/ui/data_grid';
-import { Employee, Service, FirstNameEnum, EmployeeAlias } from './app.service';
+import { Service } from './app.service';
 import ODataStore from 'devextreme/data/odata/store';
-import DataSource from 'devextreme/data/data_source';
-
-
-let modulePrefix = '';
-// @ts-ignore
-if (window && window.config?.packageConfigPaths) {
-  modulePrefix = '/app';
-}
+import { EdmLiteral } from 'devextreme/data/odata/utils';
 
 @Component({
   selector: 'demo-app',
@@ -27,16 +19,11 @@ if (window && window.config?.packageConfigPaths) {
 export class AppComponent {
   @ViewChild('exposureGrid') exposureGrid?: DxDataGridComponent;
   
-  employees: Employee[] = [];
   dataSource: any;
   selectedRecordCount: number = 0;
   totalCount: number = 0;
   selectAllHeader: { clicked: boolean; isSelectAll: boolean; } = { clicked: false, isSelectAll: false };
   selectedRecords: string[] = [];
-
-  editorOptions = { placeholder: 'Search city' };
-
-  searchExpr = ['City'];
 
   remoteOperations = {
     filtering: true,
@@ -44,73 +31,66 @@ export class AppComponent {
     sorting: true
   };
 
-  firstNameFilterDataSource = [
-    { text: 'Janet', value: 'Janet' },
-    { text: 'Suzane', value: 'Suzane' },
-    { text: 'Margaret', value: 'Margaret' },
-    { text: 'Steven', value: 'Steven' },
-    { text: 'Michael', value: 'Michael' },
-    { text: 'Nan', value: 'Nan' }
+  // City filter data - initialize with common cities to avoid empty state
+  cityFilterDataSource = [
+    { text: 'Boise', value: 'Boise' },
+    { text: 'Butte', value: 'Butte' },
+    { text: 'Chelan', value: 'Chelan' },
+    { text: 'Kent', value: 'Kent' },
+    { text: 'Moscow', value: 'Moscow' },
+    { text: 'Portland', value: 'Portland' },
+    { text: 'San Francisco', value: 'San Francisco' },
+    { text: 'Seattle', value: 'Seattle' }
   ];
 
-  calculateFirstNameFilter = (filterValue: any, selectedFilterOperation: string | null, target: string) => {
-    // Map fsname values back to OData FirstName for server-side filtering
-    const fsnameToODataMap: { [key: string]: string[] } = {
-      'Janet': ['Nancy', 'Andrew', 'Janet', 'Michael', 'Robert', 'Anne'],
-      'Suzane': ['Nancy'],
-      'Margaret': ['Andrew', 'Janet', 'Margaret', 'Michael', 'Laura'],
-      'Steven': ['Andrew', 'Margaret', 'Steven', 'Robert', 'Laura'],
-      'Michael': ['Janet', 'Steven', 'Michael', 'Anne'],
-      'Nan': ['Margaret', 'Steven', 'Michael', 'Anne']
-    };
-    
-    const odataValues = fsnameToODataMap[filterValue] || [];
-    
-    if (odataValues.length === 0) {
-      return ['FirstName', '=', filterValue];
-    } else if (odataValues.length === 1) {
-      return ['FirstName', '=', odataValues[0]];
-    } else {
-      // Build OR expression for OData
-      const filters = odataValues.map(value => ['FirstName', '=', value]);
-      return filters.reduce((acc: any, filter, index) => {
-        if (index === 0) return filter;
-        return [acc, 'or', filter];
-      });
-    }
+  calculateCityFilter = (filterValue: any, selectedFilterOperation: string | null, target: string) => {
+    // Return DevExtreme filter array format - will be transformed to OData any() in beforeSend
+    return ['AddressInfo', 'contains', filterValue];
   };
 
-  getFirstName = (rowData: any) => {
-    // Display transformed FirstName array as comma-separated fsname values
-    if (rowData.FirstName && Array.isArray(rowData.FirstName) && rowData.FirstName.length > 0) {
-      return rowData.FirstName.map((p: EmployeeAlias) => p.fsname).join(', ');
-    }
-    return '';
+  customizeCityText = (cellInfo: any) => {
+    if (!cellInfo.value || !Array.isArray(cellInfo.value)) return '';
+    return cellInfo.value
+      .map((addr: any) => addr.City?.Name)
+      .filter((name: any) => name)
+      .join(', ');
   };
+
+//   calculateCityFilter = (
+//     filterValue: any,
+//     selectedFilterOperation: string | null,
+//     target: string,
+//   ) => {
+//     // if (target === "search" && typeof filterValue === "string") {
+//     //      return [`AddressInfo/any(p: tolower(a/City/Name) eq '${filterValue}')`];
+//     //   return ["FirstName", "contains", filterValue];
+//     // }
+    
+//  return [[new EdmLiteral(`AddressInfo/any(a: tolower(a/City/Name) eq tolower('${filterValue}'))`), "=", true]];
+
+// };
+
 
   constructor(service: Service) {
-    console.log('Component initialized, setting up OData store...');
-    
-    // Create OData store for remote operations
+    // Using TripPin service with People entity
     const odataStore = new ODataStore({
-      url: 'https://services.odata.org/V4/Northwind/Northwind.svc/Employees',
-      key: 'EmployeeID',
-      keyType: 'Int32',
+      url: 'https://services.odata.org/V4/TripPinService/People',
+      key: 'UserName',
       version: 4,
-      deserializeDates: false,
       beforeSend: (e) => {
-        console.log('OData request params:', e.params);
+        console.log('Original request params:', JSON.stringify(e.params, null, 2));
         
-        // Add ascending sort order if not specified
-        if (e.params['$orderby'] && !e.params['$orderby'].endsWith(' desc')) {
-          e.params['$orderby'] += ' asc';
-        }
-        
-        // Transform FirstName filters to work with OData
-        if (e.params['$filter'] && e.params['$filter'].includes('FirstName')) {
-          // OData Northwind has FirstName as a simple string field
-          // Keep the filter as-is since we'll display transformed data on client side
-          console.log('Filter applied:', e.params['$filter']);
+        // Transform AddressInfo filter to OData any() syntax
+        if (e.params['$filter']) {
+          let filter = e.params['$filter'];
+          console.log('Original filter:', filter);
+          
+          filter = filter.replace(/contains\(tolower\(AddressInfo\),\s*'([^']+)'\)/gi, (match: string, value: string) => {
+            return `AddressInfo/any(a: tolower(a/City/Name) eq '${value}')`;
+          });
+          
+          e.params['$filter'] = filter;
+          console.log('Transformed filter:', filter);
         }
       },
       errorHandler: (e) => {
@@ -118,82 +98,7 @@ export class AppComponent {
       }
     });
 
-    // Wrap with DataSource to transform the response
-    this.dataSource = new DataSource({
-      store: odataStore,
-      postProcess: (data: any[]) => {
-        // Transform each item
-        return data.map((item: any) => {
-          const firstName = item.FirstName;
-          let firstNameArray: EmployeeAlias[] = [];
-          
-          const createAlias = (fsname: string, name: string): EmployeeAlias => ({
-            fsname: fsname,
-            name: name,
-            nickname: name.substring(0, 4).toLowerCase()
-          });
-          
-          if (firstName === 'Nancy') {
-            firstNameArray = [
-              createAlias('Janet', 'Janet'),
-              createAlias('Suzane', 'Suzane')
-            ];
-          } else if (firstName === 'Andrew') {
-            firstNameArray = [
-              createAlias('Janet', 'Janet'),
-              createAlias('Margaret', 'Margaret'),
-              createAlias('Steven', 'Steven')
-            ];
-          } else if (firstName === 'Janet') {
-            firstNameArray = [
-              createAlias('Margaret', 'Margaret'),
-              createAlias('Michael', 'Michael')
-            ];
-          } else if (firstName === 'Margaret') {
-            firstNameArray = [
-              createAlias('Steven', 'Steven'),
-              createAlias('Michael', 'Michael'),
-              createAlias('Nan', 'Nancy')
-            ];
-          } else if (firstName === 'Steven') {
-            firstNameArray = [
-              createAlias('Michael', 'Michael'),
-              createAlias('Nan', 'Nancy')
-            ];
-          } else if (firstName === 'Michael') {
-            firstNameArray = [
-              createAlias('Nan', 'Nancy'),
-              createAlias('Janet', 'Janet'),
-              createAlias('Margaret', 'Margaret')
-            ];
-          } else if (firstName === 'Robert') {
-            firstNameArray = [
-              createAlias('Steven', 'Steven'),
-              createAlias('Janet', 'Janet')
-            ];
-          } else if (firstName === 'Laura') {
-            firstNameArray = [
-              createAlias('Margaret', 'Margaret'),
-              createAlias('Steven', 'Steven')
-            ];
-          } else if (firstName === 'Anne') {
-            firstNameArray = [
-              createAlias('Michael', 'Michael'),
-              createAlias('Nan', 'Nancy'),
-              createAlias('Janet', 'Janet')
-            ];
-          } else {
-            firstNameArray = [createAlias(firstName, firstName)];
-          }
-          
-          return {
-            ...item,
-            FirstName: firstNameArray,
-            _originalFirstName: firstName // Keep original for debugging
-          };
-        });
-      }
-    });
+    this.dataSource = odataStore;
   }
 
   onSelectionChanged(event: SelectionChangedEvent) {
@@ -222,8 +127,8 @@ export class AppComponent {
         this.selectedRecords = [];
       } else {
         // Regular selection
-        this.selectedRecordCount = event.selectedRowKeys.length;
-        this.selectedRecords = event.selectedRowKeys;
+        this.selectedRecordCount = event.selectedRowKeys?.length || 0;
+        this.selectedRecords = event.selectedRowKeys || [];
       }
     }
     
@@ -276,7 +181,6 @@ export class AppComponent {
 
 bootstrapApplication(AppComponent, {
   providers: [
-    provideZoneChangeDetection({ eventCoalescing: true, runCoalescing: true }),
-    provideHttpClient(), // Add HttpClient provider
+    provideZoneChangeDetection({ eventCoalescing: true, runCoalescing: true })
   ],
 }).catch(err => console.error('Bootstrap error:', err));
