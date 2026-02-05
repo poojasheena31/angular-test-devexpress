@@ -26,23 +26,22 @@
     columnRenderingMode="virtual"
   ></dxo-data-grid-scrolling>
   
-  <dxi-data-grid-column 
+  <dxi-column 
     dataField="FirstName"
     caption="First Name">
     <dxo-data-grid-header-filter>
       <dxo-data-grid-search [enabled]="true"></dxo-data-grid-search>
     </dxo-data-grid-header-filter>
-  </dxi-data-grid-column>
+  </dxi-column>
   
-  <dxi-data-grid-column 
-    dataField="AddressInfo"
+  <dxi-column 
+    dataField="CityNamesFlat"
     caption="Cities" 
-    [customizeText]="customizeCityText"
     [calculateFilterExpression]="calculateCityFilter"
     [allowSorting]="false">
     <dxo-data-grid-header-filter 
       [allowSelectAll]="false"
       [dataSource]="cityFilterDataSource">
     </dxo-data-grid-header-filter>
-  </dxi-data-grid-column>
+  </dxi-column>
 </dx-data-grid>

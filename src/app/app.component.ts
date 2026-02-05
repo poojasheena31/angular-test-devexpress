@@ -4,6 +4,7 @@ import { DxDataGridModule, DxDataGridComponent } from 'devextreme-angular';
 import { SelectionChangedEvent, CellClickEvent } from 'devextreme/ui/data_grid';
 import { Service } from './app.service';
 import ODataStore from 'devextreme/data/odata/store';
+import DataSource from 'devextreme/data/data_source';
 import { EdmLiteral } from 'devextreme/data/odata/utils';
 
 @Component({
@@ -45,7 +46,7 @@ export class AppComponent {
 
   calculateCityFilter = (filterValue: any, selectedFilterOperation: string | null, target: string) => {
     // Return DevExtreme filter array format - will be transformed to OData any() in beforeSend
-    return ['AddressInfo', 'contains', filterValue];
+    return ['CityNamesFlat', 'contains', filterValue];
   };
 
   customizeCityText = (cellInfo: any) => {
@@ -55,21 +56,6 @@ export class AppComponent {
       .filter((name: any) => name)
       .join(', ');
   };
-
-//   calculateCityFilter = (
-//     filterValue: any,
-//     selectedFilterOperation: string | null,
-//     target: string,
-//   ) => {
-//     // if (target === "search" && typeof filterValue === "string") {
-//     //      return [`AddressInfo/any(p: tolower(a/City/Name) eq '${filterValue}')`];
-//     //   return ["FirstName", "contains", filterValue];
-//     // }
-    
-//  return [[new EdmLiteral(`AddressInfo/any(a: tolower(a/City/Name) eq tolower('${filterValue}'))`), "=", true]];
-
-// };
-
 
   constructor(service: Service) {
     // Using TripPin service with People entity
@@ -85,7 +71,7 @@ export class AppComponent {
           let filter = e.params['$filter'];
           console.log('Original filter:', filter);
           
-          filter = filter.replace(/contains\(tolower\(AddressInfo\),\s*'([^']+)'\)/gi, (match: string, value: string) => {
+          filter = filter.replace(/contains\(tolower\(CityNamesFlat\),\s*'([^']+)'\)/gi, (match: string, value: string) => {
             return `AddressInfo/any(a: tolower(a/City/Name) eq '${value}')`;
           });
           
@@ -97,8 +83,18 @@ export class AppComponent {
         console.error('OData error:', e);
       }
     });
-
-    this.dataSource = odataStore;
+    
+    this.dataSource = new DataSource({
+          store: odataStore,
+          postProcess: (data) => {
+            data.forEach((item: any) => {
+              item.CityNamesFlat = item.AddressInfo
+                ? item.AddressInfo.map((addr: any) => addr.City?.Name).join(", ")
+                : "";
+            });
+            return data;
+          },
+        });
   }
 
   onSelectionChanged(event: SelectionChangedEvent) {
