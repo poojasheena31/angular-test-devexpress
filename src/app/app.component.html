@@ -1,16 +1,11 @@
 <dx-data-grid
-  #exposureGrid
-  id="people"
+  id="gridContainer"
   [dataSource]="dataSource"
-  keyExpr="UserName"
-  [showRowLines]="true"
-  [showBorders]="true"
-  [columnAutoWidth]="true"
   [remoteOperations]="remoteOperations"
-  (onCellClick)="onCellClick($event)"
-  (onSelectionChanged)="onSelectionChanged($event)"
+  [showBorders]="true"
 >
-  <dxo-data-grid-header-filter [visible]="true"></dxo-data-grid-header-filter>
+  <dxo-filter-row [visible]="true"></dxo-filter-row>
+  <dxo-header-filter [visible]="true"></dxo-header-filter>
   <dxo-data-grid-selection
     mode="multiple"
     selectAllMode="allPages"
@@ -18,31 +13,23 @@
     [allowSelectAll]="true"
     showCheckBoxesMode="always"
   ></dxo-data-grid-selection>
-  <dxo-data-grid-paging [enabled]="true" [pageSize]="10"></dxo-data-grid-paging>
-  <dxo-data-grid-scrolling
-    mode="infinite"
-    [preloadEnabled]="true"
-    [useNative]="false"
-    columnRenderingMode="virtual"
-  ></dxo-data-grid-scrolling>
-  
-  <dxi-data-grid-column 
-    dataField="FirstName"
-    caption="First Name">
-    <dxo-data-grid-header-filter>
-      <dxo-data-grid-search [enabled]="true"></dxo-data-grid-search>
-    </dxo-data-grid-header-filter>
-  </dxi-data-grid-column>
-  
-  <dxi-data-grid-column 
-    dataField="AddressInfo"
-    caption="Cities" 
-    [customizeText]="customizeCityText"
+
+  <dxi-column dataField="UserName"></dxi-column>
+  <dxi-column dataField="FirstName"></dxi-column>
+  <dxi-column dataField="LastName"></dxi-column>
+  <dxi-column
+    caption="Tags (Nested)"
+    dataField="TagsFlat"
+    [calculateFilterExpression]="calculateTagFilter"
+  >
+  </dxi-column>
+
+  <dxi-column
+    caption="Cities (Flattened)"
+    dataField="CityNamesFlat"
     [calculateFilterExpression]="calculateCityFilter"
-    [allowSorting]="false">
-    <dxo-data-grid-header-filter 
-      [allowSelectAll]="false"
-      [dataSource]="cityFilterDataSource">
-    </dxo-data-grid-header-filter>
-  </dxi-data-grid-column>
+    [allowSorting]="false"
+  >
+    <dxo-header-filter [dataSource]="cityFilterDataSource"></dxo-header-filter>
+  </dxi-column>
 </dx-data-grid>
